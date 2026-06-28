@@ -1,82 +1,78 @@
 # User Management Dashboard
 
-## Project Description
+## Project Overview
 
-This is a small React dashboard for viewing and managing a list of users. It includes search, filters, sorting, pagination, and basic add/edit/delete actions.
+A React app for managing users that supports viewing, searching, filtering, sorting, adding, editing, and deleting users. The app loads initial user data from the JSONPlaceholder API and keeps local state for edits.
 
 ## Features
 
-- View users in a table
-- Search by name or email
-- Filter by department and other fields
-- Sort columns
-- Add, edit, and delete users
-- Show loading and error states
-
-## Project Structure
-
-- index.html
-- package.json
-- README.md
-- vite.config.js
-- src/
-  - App.jsx
-  - main.jsx
-  - api/
-    - userService.js
-  - components/
-    - DeleteModal.jsx
-    - FilterBar.jsx
-    - Header.jsx
-    - Loader.jsx
-    - Pagination.jsx
-    - Pagination.test.jsx
-    - SearchBar.jsx
-    - SearchBar.test.jsx
-    - UserFormModal.jsx
-    - UserFormModal.test.jsx
-    - UserRow.jsx
-    - UserTable.jsx
-  - hooks/
-    - useUsers.js
-  - styles/
-    - global.css
-  - test/
-    - setup.js
-  - utils/
-    - constants.js
-    - helpers.js
-    - helpers.test.js
-    - validators.js
-    - validators.test.js
+- View users from JSONPlaceholder API
+- Add a user
+- Edit a user
+- Delete a user
+- Search users
+- Filter users
+- Sort users
+- Pagination (10, 25, 50, 100)
+- Form validation
+- Error handling
+- Responsive design
 
 ## Tech Stack
 
 - React
 - Vite
+- JavaScript
 - Axios
-- Vitest
-- Testing Library
+- CSS
+
+## Project Structure
+
+src/  
+├── api/  
+├── components/  
+├── hooks/  
+├── styles/  
+├── test/  
+└── utils/  
 
 ## Installation
 
 ```bash
 npm install
+```
+
+## Run the Project
+
+```bash
 npm run dev
 ```
 
-## Build
+## Build for Production
 
 ```bash
 npm run build
 ```
 
+## Run Tests
+
+```bash
+npm test
+```
+
 ## Notes
 
 - JSONPlaceholder does not persist data.
-- Changes are stored in local state while the app is running.
+- Added, edited, and deleted users are managed in local React state.
+- Departments are generated locally because the API does not provide them.
+
+## Future Improvements
+
+- Connect to a real backend
+- Add more tests
+- Add authentication
 
 ## Author
 
-Your Name
-https://github.com/Madhuri-0607
+Name: Mothukuri Madhuri
+GitHub: [https://github.com/Madhuri-0607](https://github.com/Madhuri-0607)

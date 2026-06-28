@@ -1,11 +1,8 @@
 # User Management Dashboard
 
-## Project Overview
+## Project Description
 
-A React app for managing users that supports viewing, searching, filtering, sorting, adding, editing, and deleting users. The app loads initial user data from the JSONPlaceholder API and keeps local state for edits.
-
-## Deploy Link
-https://user-management-system-mocha-chi.vercel.app/
+This is a small React dashboard for viewing and managing a list of users. It includes search, filters, sorting, pagination, and basic add/edit/delete actions.
 
 ## Features
 
@@ -27,17 +24,8 @@ https://user-management-system-mocha-chi.vercel.app/
 - Vite
 - JavaScript
 - Axios
-- CSS
-
-## Project Structure
-
-src/  
-├── api/  
-├── components/  
-├── hooks/  
-├── styles/  
-├── test/  
-└── utils/  
+- Vitest
+- Testing Library
 
 ## Installation
 

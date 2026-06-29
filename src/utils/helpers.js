@@ -32,7 +32,7 @@ export function transformUser(rawUser, index) {
     id: rawUser.id,
     firstName,
     lastName,
-    email: realisticEmail,
+    email: rawUser.email || realisticEmail,
     department: rawUser.department || assignDepartment(index)
   }
 }

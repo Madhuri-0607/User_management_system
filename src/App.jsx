@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import Header from './components/Header'
 import SearchBar from './components/SearchBar'
 import FilterBar from './components/FilterBar'
@@ -9,24 +10,72 @@ import DeleteModal from './components/DeleteModal'
 import Loader from './components/Loader'
 import { useUsers } from './hooks/useUsers'
 import { DEFAULT_PAGE_SIZE } from './utils/constants'
-import { compareStrings } from './utils/helpers'
+import { downloadCsv } from './utils/exportCsv'
+import { filterUsers } from './utils/filterUsers'
+import { sortUsers } from './utils/sortUsers'
+import { getTotalPages, paginateUsers } from './utils/paginateUsers'
+import { resolveTheme, setThemePreference } from './utils/theme'
+import { buildUserListParams, parseUserListParams } from './utils/urlState'
 
 const EMPTY_ADVANCED_FILTERS = { firstName: '', lastName: '', email: '' }
 
 export default function App() {
-  const { users, isLoading, error, actionError, clearActionError, refetch, addUser, editUser, removeUser } =
-    useUsers()
+  const {
+    users,
+    isLoading,
+    error,
+    actionError,
+    actionSuccess,
+    clearActionMessages,
+    refetch,
+    addUser,
+    editUser,
+    removeUser
+  } = useUsers()
+  const [searchParams, setSearchParams] = useSearchParams()
 
-  const [searchTerm, setSearchTerm] = useState('')
-  const [departmentFilter, setDepartmentFilter] = useState('All')
+  const [searchTerm, setSearchTerm] = useState(() => parseUserListParams(searchParams).search)
+  const [departmentFilter, setDepartmentFilter] = useState(() => parseUserListParams(searchParams).department)
   const [advancedFilters, setAdvancedFilters] = useState(EMPTY_ADVANCED_FILTERS)
-  const [sortConfig, setSortConfig] = useState({ field: 'firstName', direction: 'asc' })
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
+  const [sortConfig, setSortConfig] = useState(() => ({
+    field: parseUserListParams(searchParams).sortField,
+    direction: parseUserListParams(searchParams).sortDirection
+  }))
+  const [page, setPage] = useState(() => parseUserListParams(searchParams).page)
+  const [pageSize, setPageSize] = useState(() => parseUserListParams(searchParams).pageSize)
+  const [theme, setTheme] = useState(() => resolveTheme())
 
   const [formModal, setFormModal] = useState(null) // { mode: 'add' | 'edit', user? }
   const [userPendingDelete, setUserPendingDelete] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    const parsedState = parseUserListParams(searchParams)
+    setSearchTerm(parsedState.search)
+    setDepartmentFilter(parsedState.department)
+    setSortConfig({ field: parsedState.sortField, direction: parsedState.sortDirection })
+    setPage(parsedState.page)
+    setPageSize(parsedState.pageSize)
+  }, [searchParams])
+
+  useEffect(() => {
+    const nextParams = buildUserListParams({
+      search: searchTerm,
+      department: departmentFilter,
+      sortField: sortConfig.field,
+      sortDirection: sortConfig.direction,
+      page,
+      pageSize
+    })
+
+    if (searchParams.toString() !== nextParams.toString()) {
+      setSearchParams(nextParams, { replace: true })
+    }
+  }, [departmentFilter, page, pageSize, searchParams, searchTerm, setSearchParams, sortConfig.direction, sortConfig.field])
+
+  useEffect(() => {
+    setThemePreference(theme)
+  }, [theme])
 
   // Keep the handlers stable so the UI stays predictable.
   const handleSearchChange = useCallback((value) => {
@@ -63,46 +112,24 @@ export default function App() {
     })
   }, [])
 
-  const filteredUsers = useMemo(() => {
-    const term = searchTerm.trim().toLowerCase()
+  const handleThemeToggle = useCallback(() => {
+    setTheme((currentTheme) => (currentTheme === 'dark' ? 'light' : 'dark'))
+  }, [])
 
-    return users.filter((user) => {
-      const matchesSearch =
-        term === '' ||
-        user.firstName.toLowerCase().includes(term) ||
-        user.lastName.toLowerCase().includes(term) ||
-        user.email.toLowerCase().includes(term)
+  const filteredUsers = useMemo(
+    () => filterUsers(users, searchTerm, departmentFilter, advancedFilters),
+    [users, searchTerm, departmentFilter, advancedFilters]
+  )
 
-      const matchesDepartment = departmentFilter === 'All' || user.department === departmentFilter
+  const sortedUsers = useMemo(() => sortUsers(filteredUsers, sortConfig), [filteredUsers, sortConfig])
 
-      const matchesFirstName =
-        advancedFilters.firstName === '' ||
-        user.firstName.toLowerCase().includes(advancedFilters.firstName.toLowerCase())
-
-      const matchesLastName =
-        advancedFilters.lastName === '' ||
-        user.lastName.toLowerCase().includes(advancedFilters.lastName.toLowerCase())
-
-      const matchesEmail =
-        advancedFilters.email === '' ||
-        user.email.toLowerCase().includes(advancedFilters.email.toLowerCase())
-
-      return (
-        matchesSearch && matchesDepartment && matchesFirstName && matchesLastName && matchesEmail
-      )
-    })
-  }, [users, searchTerm, departmentFilter, advancedFilters])
-
-  // Compare values in a simple way that also handles accents.
-  const sortedUsers = useMemo(() => {
-    return [...filteredUsers].sort((a, b) => {
-      const result = compareStrings(a[sortConfig.field], b[sortConfig.field])
-      return sortConfig.direction === 'asc' ? result : -result
-    })
-  }, [filteredUsers, sortConfig])
-
-  const totalPages = Math.max(1, Math.ceil(sortedUsers.length / pageSize))
+  const totalPages = useMemo(() => getTotalPages(sortedUsers.length, pageSize), [sortedUsers.length, pageSize])
   const currentPage = Math.min(page, totalPages)
+
+  const handleExportCsv = useCallback(() => {
+    const date = new Date().toISOString().slice(0, 10)
+    downloadCsv(sortedUsers, `users-${date}.csv`)
+  }, [sortedUsers])
 
   // Keep the page number in range if the list gets shorter.
   useEffect(() => {
@@ -111,34 +138,57 @@ export default function App() {
     }
   }, [page, totalPages])
 
-  const paginatedUsers = useMemo(() => {
-    const start = (currentPage - 1) * pageSize
-    return sortedUsers.slice(start, start + pageSize)
-  }, [sortedUsers, currentPage, pageSize])
+  const paginatedUsers = useMemo(
+    () => paginateUsers(sortedUsers, currentPage, pageSize),
+    [sortedUsers, currentPage, pageSize]
+  )
 
   async function handleFormSubmit(values) {
     setIsSubmitting(true)
-    const success =
-      formModal.mode === 'edit' ? await editUser(formModal.user.id, values) : await addUser(values)
-    setIsSubmitting(false)
-    if (success) setFormModal(null)
+    try {
+      const success =
+        formModal.mode === 'edit'
+          ? await editUser(formModal.user.id, values)
+          : await addUser(values)
+      if (success) setFormModal(null)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   async function handleConfirmDelete() {
     setIsSubmitting(true)
-    const success = await removeUser(userPendingDelete.id)
-    setIsSubmitting(false)
-    if (success) setUserPendingDelete(null)
+    try {
+      const success = await removeUser(userPendingDelete.id)
+      if (success) setUserPendingDelete(null)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
     <div className="page-shell">
-      <Header totalUsers={users.length} onAddUser={() => setFormModal({ mode: 'add' })} />
+      <Header
+        totalUsers={users.length}
+        theme={theme}
+        onThemeToggle={handleThemeToggle}
+        onAddUser={() => setFormModal({ mode: 'add' })}
+        onExportCsv={handleExportCsv}
+      />
 
       {actionError && (
         <div className="alert-banner alert-banner--error" role="alert">
           <span>{actionError}</span>
-          <button type="button" className="alert-banner__dismiss" onClick={clearActionError}>
+          <button type="button" className="alert-banner__dismiss" onClick={clearActionMessages}>
+            ×
+          </button>
+        </div>
+      )}
+
+      {actionSuccess && (
+        <div className="alert-banner alert-banner--success" role="status">
+          <span>{actionSuccess}</span>
+          <button type="button" className="alert-banner__dismiss" onClick={clearActionMessages}>
             ×
           </button>
         </div>
@@ -170,6 +220,22 @@ export default function App() {
 
       {!isLoading && !error && (
         <>
+          <div className="summary-strip" aria-label="User summary">
+            <div className="summary-card">
+              <span className="summary-card__label">Visible</span>
+              <strong>{sortedUsers.length}</strong>
+            </div>
+            <div className="summary-card">
+              <span className="summary-card__label">Departments</span>
+              <strong>{new Set(sortedUsers.map((user) => user.department)).size}</strong>
+            </div>
+            <div className="summary-card">
+              <span className="summary-card__label">Page</span>
+              <strong>
+                {currentPage} / {totalPages}
+              </strong>
+            </div>
+          </div>
           <UserTable
             users={paginatedUsers}
             sortConfig={sortConfig}

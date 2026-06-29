@@ -2,7 +2,7 @@
 
 ## Project Description
 
-This is a small React dashboard for viewing and managing a list of users. It includes search, filters, sorting, pagination, and basic add/edit/delete actions.
+A React app for managing users that supports viewing, searching, filtering, sorting, adding, editing, and deleting users. The app loads initial user data from the JSONPlaceholder API and keeps local state for edits.
 
 ## Features
 
@@ -11,12 +11,15 @@ This is a small React dashboard for viewing and managing a list of users. It inc
 - Edit a user
 - Delete a user
 - Search users
-- Filter users
-- Sort users
-- Pagination (10, 25, 50, 100)
-- Form validation
-- Error handling
-- Responsive design
+- Department filter and advanced field filters
+- Sort users by first name, last name, email, or department
+- Pagination with adjustable page size
+- Responsive layout and mobile-friendly sorting controls
+- Form validation with inline feedback
+- Error banners and retry behavior
+- Export current results as CSV
+- Dark mode toggle
+- URL state persistence for search, filters, sort, and pagination
 
 ## Tech Stack
 
@@ -24,8 +27,17 @@ This is a small React dashboard for viewing and managing a list of users. It inc
 - Vite
 - JavaScript
 - Axios
-- Vitest
-- Testing Library
+- CSS
+
+## Project Structure
+
+src/
+├── api/
+├── components/
+├── hooks/
+├── styles/
+├── test/
+└── utils/
 
 ## Installation
 
@@ -38,6 +50,8 @@ npm install
 ```bash
 npm run dev
 ```
+
+Open `http://localhost:5173` in your browser.
 
 ## Build for Production
 
@@ -53,15 +67,15 @@ npm test
 
 ## Notes
 
-- JSONPlaceholder does not persist data.
-- Added, edited, and deleted users are managed in local React state.
-- Departments are generated locally because the API does not provide them.
+- JSONPlaceholder does not persist data, so add/edit/delete operations are managed in local state.
+- Departments are assigned locally because the API does not provide departments.
+- Error handling includes dedicated error messages and retry options for API failures.
 
 ## Future Improvements
 
-- Connect to a real backend
-- Add more tests
-- Add authentication
+- Connect to a real backend API
+- Add integration/end-to-end tests
+- Improve accessibility and keyboard navigation for modals
 
 ## Author
 

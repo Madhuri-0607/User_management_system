@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import * as userService from '../api/userService'
 import { transformUsers, generateLocalId } from '../utils/helpers'
+import { buildActionError, getErrorMessage } from '../utils/errorHandler'
 
 /**
  * Keep the user list in state and update it after each successful action.
@@ -11,16 +12,20 @@ export function useUsers() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
   const [actionError, setActionError] = useState(null)
+  const [actionSuccess, setActionSuccess] = useState(null)
 
   const fetchUsers = useCallback(async () => {
     setIsLoading(true)
     setError(null)
+    setActionError(null)
+    setActionSuccess(null)
+
     try {
       const rawUsers = await userService.getUsers()
       setUsers(transformUsers(rawUsers))
     } catch (err) {
       console.error('Failed to fetch users:', err)
-      setError('Unable to load users. Please check your connection and try again.')
+      setError(getErrorMessage(err, 'Unable to load users. Please check your connection and try again.'))
     } finally {
       setIsLoading(false)
     }
@@ -30,60 +35,65 @@ export function useUsers() {
     fetchUsers()
   }, [fetchUsers])
 
-  const addUser = useCallback(async (formValues) => {
+  async function runUserAction(actionLabel, successMessage, actionCallback) {
     setActionError(null)
-    try {
-      await userService.createUser(formValues)
-      // The API returns a fixed id, so make one up locally.
-      setUsers((prev) => {
-        const newUser = { id: generateLocalId(prev), ...formValues }
-        return [...prev, newUser]
-      })
-      return true
-    } catch (err) {
-      console.error('Failed to add user:', err)
-      setActionError('Failed to add user. Please try again.')
-      return false
-    }
-  }, [])
+    setActionSuccess(null)
 
-  const editUser = useCallback(async (id, formValues) => {
-    setActionError(null)
     try {
-      // Only update the remote record when it actually exists.
-      if (id <= 10) {
-        await userService.updateUser(id, formValues)
-      }
-      setUsers((prev) =>
-        prev.map((user) => (user.id === id ? { ...user, ...formValues, id } : user))
-      )
+      await actionCallback()
+      setActionSuccess(successMessage)
       return true
     } catch (err) {
-      console.error('Failed to update user:', err)
-      setActionError('Failed to update user. Please try again.')
+      console.error(`Failed to ${actionLabel}:`, err)
+      setActionError(buildActionError(actionLabel, err))
       return false
     }
-  }, [])
+  }
 
-  const removeUser = useCallback(async (id) => {
-    setActionError(null)
-    try {
-      await userService.deleteUser(id)
-      setUsers((prev) => prev.filter((user) => user.id !== id))
-      return true
-    } catch (err) {
-      console.error('Failed to delete user:', err)
-      setActionError('Failed to delete user. Please try again.')
-      return false
-    }
-  }, [])
+  const addUser = useCallback(
+    async (formValues) =>
+      runUserAction('add user', 'User added successfully.', async () => {
+        await userService.createUser(formValues)
+        setUsers((prev) => {
+          const newUser = { id: generateLocalId(prev), ...formValues }
+          return [...prev, newUser]
+        })
+      }),
+    []
+  )
+
+  const editUser = useCallback(
+    async (id, formValues) =>
+      runUserAction('update user', 'User updated successfully.', async () => {
+        if (id <= 10) {
+          await userService.updateUser(id, formValues)
+        }
+        setUsers((prev) =>
+          prev.map((user) => (user.id === id ? { ...user, ...formValues, id } : user))
+        )
+      }),
+    []
+  )
+
+  const removeUser = useCallback(
+    async (id) =>
+      runUserAction('delete user', 'User deleted successfully.', async () => {
+        await userService.deleteUser(id)
+        setUsers((prev) => prev.filter((user) => user.id !== id))
+      }),
+    []
+  )
 
   return {
     users,
     isLoading,
     error,
     actionError,
-    clearActionError: () => setActionError(null),
+    actionSuccess,
+    clearActionMessages: () => {
+      setActionError(null)
+      setActionSuccess(null)
+    },
     refetch: fetchUsers,
     addUser,
     editUser,

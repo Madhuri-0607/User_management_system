@@ -66,23 +66,34 @@ Open `http://localhost:5173` in your browser.
 npm run build
 ```
 
-## Run Tests
+## Run Tests  
 
 ```bash
 npm test
 ```
 
-## Notes
+## Assumptions 
 
-- JSONPlaceholder does not persist data, so add/edit/delete operations are managed in local state.
-- Departments are assigned locally because the API does not provide departments.
-- Error handling includes dedicated error messages and retry options for API failures.
+- JSONPlaceholder does not persist data, so add/edit/delete operations are managed in local state.  
+- Departments are assigned locally because the API does not provide departments.  
+- Error handling includes dedicated error messages and retry options for API failures.  
 
-## Future Improvements
 
-- Connect to a real backend API
-- Add integration/end-to-end tests
-- Improve accessibility and keyboard navigation for modals
+## Challenges Faced   
+- Managing URL state with filters and pagination.  
+- Handling API errors gracefully.    
+- Keeping table state synchronized across search, sorting, and pagination.    
+
+## Future Improvements  
+- Authentication and Role-Based Access Control  
+- Analytics Dashboard    
+- Bulk Actions  
+- Audit Logs  
+- Backend integration with persistent storage  
+
+## Screenshots
+
+<img width="1910" height="1445" alt="image" src="https://github.com/user-attachments/assets/0d6a24f5-c80f-4ed1-b09d-3c24a6f47ae2" />
 
 ## Author
 

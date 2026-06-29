@@ -4,6 +4,13 @@
 
 A React app for managing users that supports viewing, searching, filtering, sorting, adding, editing, and deleting users. The app loads initial user data from the JSONPlaceholder API and keeps local state for edits.
 
+## Live Demo
+
+https://user-management-system-mocha-chi.vercel.app/
+
+## GitHub Repository
+https://github.com/Madhuri-0607/User_management_system
+
 ## Features
 
 - View users from JSONPlaceholder API

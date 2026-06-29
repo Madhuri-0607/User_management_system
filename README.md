@@ -31,13 +31,13 @@ A React app for managing users that supports viewing, searching, filtering, sort
 
 ## Project Structure
 
-src/
-├── api/
-├── components/
-├── hooks/
-├── styles/
-├── test/
-└── utils/
+src/  
+├── api/  
+├── components/  
+├── hooks/  
+├── styles/  
+├── test/  
+└── utils/   
 
 ## Installation
 
